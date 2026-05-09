@@ -28,4 +28,6 @@ EOF
 
 # user
 adduser -D vm
+adduser -D ti-gw
 adduser vm wheel
+adduser ti-gw wheel

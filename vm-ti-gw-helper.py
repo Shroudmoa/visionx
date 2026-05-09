@@ -38,28 +38,29 @@ def download_token(kundennummer):
         print(err)
     return code == 0
 ############################################################new era
+def check_ports_socket_parallel(host="127.0.0.1", show_only_problems=False):
+    print(f"Port Status ({host}):")
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=6) as executor:
+        results = list(executor.map(lambda p: check_single_port(host, p), PORTS))
+
+    for port, ok in sorted(results):
+        if ok:
+            if not show_only_problems:
+                print(f"OK     Port {port} erreichbar")
+        else:
+            print(f"ERROR  Port {port} nicht erreichbar")
+
+
 def check_single_port(host, port):
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.settimeout(2)
+    s.settimeout(1)
     try:
         result = s.connect_ex((host, port))
         return port, (result == 0)
     finally:
         s.close()
 
-
-def check_ports_socket_parallel(host="127.0.0.1", show_only_problems=False):
-    print(f"Port Status ({host}):")
-
-    with concurrent.futures.ThreadPoolExecutor() as executor:
-        results = list(executor.map(lambda p: check_single_port(host, p), PORTS))
-
-    for port, ok in results:
-        if ok:
-            if not show_only_problems:
-                print(f"OK     Port {port} erreichbar")
-        else:
-            print(f"ERROR  Port {port} nicht erreichbar")
 #################################################################new era
 
 
@@ -137,10 +138,8 @@ def monitor_loop2():
             print(" -", ip)
 
         print("\nPort Checks:")
-
         for ip in ips:
-            print(f"\nChecking {ip}")
-            check_ports_socket_parallel(ip, show_only_problems=True)
+            check_ports_socket_parallel(ip, show_only_problems=False)
         
         print("\nfachdienstliche Verbindung:")
         test_connection()
