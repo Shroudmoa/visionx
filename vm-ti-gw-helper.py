@@ -4,12 +4,15 @@ import os
 import time
 import socket
 import concurrent.futures
+from datetime import datetime
+try:
+    import pyperclip
+except ImportError:
+    pyperclip = None
 
 
 BASE_URL = "https://vm-tiaas.visionmaxx.net"
-
 BASE_URL2 = "https://wl-ti-gateway-nutzerportal-pu.wlcle.org"
-
 TOKEN_PATH = "./token"
 
 PORTS = [4742, 443, 8500, 636, 53, 9500]
@@ -130,26 +133,17 @@ def test_connection():
 def monitor_loop2():
     while True:
         os.system("clear")
-
         ips = getips()
-
         print("IPv4 Adressen:")
         for ip in ips:
             print(" -", ip)
-
         print("\nPort Checks:")
         for ip in ips:
             check_ports_socket_parallel(ip, show_only_problems=False)
-        
         print("\nfachdienstliche Verbindung:")
         test_connection()
-
         print("\n10 Sek loop\n")
-
         time.sleep(10)
-
-
-
 
 def show_logs():
     log_dir = "/home/vm/tigw/data/logs/"
@@ -169,13 +163,154 @@ def show_logs():
         print("UngÃƒÂ¼ltige Auswahl")
 
 
+
+def installation_report():
+
+    tests = [
+        "VDSM",
+        "Einlesen",
+        "KIM",
+        "eRezept"
+    ]
+
+    results = {}
+
+    konnektor_ip = input("Konnektor IP/Subnetz (z.B. 192.168.10.15/24): ").strip()
+
+    print("\nAlles getestet? (VDSM, Einlesen, KIM, eRezept)")
+    overall = input("y oder n: ").strip().lower()
+
+    if overall == "y":
+
+        for test in tests:
+            results[test] = {
+                "status": "OK",
+                "reason": ""
+            }
+
+    else:
+
+        print("\nWas hat NICHT geklappt?")
+        print("Mehrere Nummern mit Komma trennen\n")
+
+        for idx, test in enumerate(tests, start=1):
+            print(f"{idx} = {test}")
+
+        selection = input("\nAuswahl: ").strip()
+
+        failed = set()
+
+        for item in selection.split(","):
+            item = item.strip()
+
+            if item in ["1", "2", "3", "4"]:
+                failed.add(tests[int(item) - 1])
+
+        for test in tests:
+
+            if test in failed:
+
+                reason = input(f"Grund für '{test}': ")
+
+                results[test] = {
+                    "status": "NICHT OK",
+                    "reason": reason
+                }
+
+            else:
+
+                results[test] = {
+                    "status": "OK",
+                    "reason": ""
+                }
+
+    hostname = socket.gethostname()
+
+    output = []
+    output.append(
+        f"ti-gw-installation auf "
+        f"(vm@{hostname}) "
+        f"mit der Konnektor-IP {konnektor_ip} abgeschlossen.\n"
+    )
+
+    output.append("Testübersicht:")
+
+    for idx, test in enumerate(tests, start=1):
+
+        status = results[test]["status"]
+
+        if status == "OK":
+            output.append(f"{idx}. {test}: OK")
+
+        else:
+            output.append(
+                f"{idx}. {test}: NICHT OK "
+                f"= {results[test]['reason']}"
+            )
+
+    output.append(f"\nZeitpunkt: {datetime.now()}")
+
+    final_text = "\n".join(output)
+
+    print("\n" + "=" * 60)
+    print(final_text)
+    print("=" * 60)
+
+    if pyperclip:
+        try:
+            pyperclip.copy(final_text)
+            print("\n[+] Ausgabe wurde ins Clipboard kopiert.")
+        except Exception as e:
+            print(f"\n[!] Clipboard Fehler: {e}")
+    else:
+        print(
+            "\n[!] pyperclip nicht installiert.\n"
+            "Installieren mit:\n"
+            "pip install pyperclip"
+        )
+
+
+
+
+
+############################################make it look nice -Elon Musk
+def cls():
+    os.system('cls' if os.name == 'nt' else 'clear')
+COL_DARK = "\x1b[38;5;54m"
+COL_PURPLE = "\x1b[38;5;99m"
+COL_RESET = "\x1b[0m"
+COL_BOLD = "\x1b[1m"
+def animated_logo():
+    logo = [
+" _    _ _      _                              "       ,
+"| |  | (_)    (_)                                    ",
+"| |  | |_  ___ _  ___  ____  ____   ____ _   _ _   _ ",
+" \ \/ /| |/___) |/ _ \|  _ \|    \ / _  ( \ / | \ / )",
+"  \  / | |___ | | |_| | | | | | | ( ( | |) X ( ) X ( ",
+"   \/  |_(___/|_|\___/|_| |_|_|_|_|\_||_(_/ \_|_/ \_)",
+"                                                    ",
+    ]
+    for i in range(2):
+        for color in [COL_DARK, COL_PURPLE]:
+            cls()
+            print(color + COL_BOLD)
+            for line in logo:
+                print(" " * 6 + line)
+            print(f"\n Author: Visionmaxx GmbH - rmi/moa - V1.0")
+            print(COL_RESET)
+            time.sleep(0.25)
+
 def main():
+    cls()
+    animated_logo()
     print("1. Setup")
     print("2. Monitoring")
     print("3. Logs anzeigen")
-
+    print("4. Installationsreport erstellen")
+    
     option = input("Auswahl: ")
-
+  
+    
     if option == "1":
         if not check_reachability():
             print("wl-ti-gateway-nutzerportal-pu.wlcle.org wurde nicht erreicht!")
@@ -192,11 +327,12 @@ def main():
 
         get_ipv4_addresses()
     elif option == "2":
-        
         monitor_loop2()
-
     elif option == "3":
         show_logs()
+    elif option == "4":
+        installation_report()
+
 
 
 if __name__ == "__main__":
