@@ -162,8 +162,11 @@ def show_logs():
     except Exception:
         print("UngÃƒÂ¼ltige Auswahl")
 
-
-
+def about():
+    print("TI-Gateway Helper Script")
+    print("Version 1.0")
+    print("Wünsche/Probleme an rmi/moa")
+    
 def installation_report():
 
     tests = [
@@ -273,7 +276,7 @@ def installation_report():
 
 
 
-############################################make it look nice -Elon Musk
+#########################################################
 def cls():
     os.system('cls' if os.name == 'nt' else 'clear')
 COL_DARK = "\x1b[38;5;54m"
@@ -296,7 +299,7 @@ def animated_logo():
             print(color + COL_BOLD)
             for line in logo:
                 print(" " * 6 + line)
-            print(f"\n Author: Visionmaxx GmbH - rmi/moa - V1.0")
+            print(f"\n   Visionmaxx GmbH - V1.0")
             print(COL_RESET)
             time.sleep(0.25)
 
@@ -307,6 +310,7 @@ def main():
     print("2. Monitoring")
     print("3. Logs anzeigen")
     print("4. Installationsreport erstellen")
+    print("5. About")
     
     option = input("Auswahl: ")
   
@@ -332,7 +336,8 @@ def main():
         show_logs()
     elif option == "4":
         installation_report()
-
+    elif option == "5":
+        about()
 
 
 if __name__ == "__main__":
